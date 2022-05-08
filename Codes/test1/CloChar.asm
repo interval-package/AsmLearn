@@ -27,10 +27,11 @@ s0: mov dx,cx
 	;DX暂存外循环变量的值
  	mov bx,0  	;BX用来定位内存的偏移地址
  	mov si,40H 	;SI用来定位显示的列，初始为第64列（从0列记起）
- 	pop ax  	;从堆栈中取得字符属性，AL部分有效
+ 	pop ax  	;从堆栈中取得字符属性，AL部分有效，但是还是取整个ax
 
 	mov cx,16
-	s: mov ah,[bx]
+	s: 
+	mov ah,ds:[bx]
  	mov es:[bp][si],ah 	
  	; 存放字符的ASCII码
  	mov es:[bp][si].1,al  	
