@@ -1,0 +1,29 @@
+{
+	"folders":
+	[
+		{
+			"name": "Dos_Env",
+			"path": ".",
+			"file_exclude_patterns": ["*.map", "*.MAP", "*.obj", "*.CRF", "*.LST"],
+			"file_inclued_patterns": ["*.asm", "*.bat"],
+			"follow_symlinks": true
+
+		},
+	],
+	"build_systems": [
+        {
+            "name": "Open DosBox",
+            "shell_cmd": "\"D:/masm32/bin/ZzaBuild.bat\" ${file_base_name}",
+            "shell": true,
+            "file_regex": "^[ ]*File \"(...*?)\", line ([0-9]*)",
+            "selector": "source.asm, source.ASM",
+            "file_patterns": "*.asm",
+        },
+        {
+        	"name": "try",
+        	"file_patterns": "*.asm",
+        	"file_regex": "^[ ]*File \"(...*?)\", line ([0-9]*)",
+            "selector": "source.asm, source.ASM",
+        }
+    ]
+}
