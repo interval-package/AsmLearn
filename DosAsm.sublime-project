@@ -19,11 +19,5 @@
             "selector": "source.asm, source.ASM",
             "file_patterns": "*.asm",
         },
-        {
-        	"name": "try",
-        	"file_patterns": "*.asm",
-        	"file_regex": "^[ ]*File \"(...*?)\", line ([0-9]*)",
-            "selector": "source.asm, source.ASM",
-        }
     ]
 }

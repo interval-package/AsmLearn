@@ -23,13 +23,14 @@ start:
 	mov ax, extra
 	mov es, ax
 
-	call print offset input_msg_1
+	mov esi, offset input_msg_1
+	call print
 
 	mov ax, 0100h
 	int 21H
 
-print proc near uses info
-	mov ax, info
+print proc near uses esi
+	mov ax, esi
 	mov dx, ax
 	mov ax, 0900h
 	int 21H
