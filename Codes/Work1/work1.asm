@@ -14,21 +14,17 @@ start:
 
 	call inputf
 
-	mov ax, offset str_res - 3
-	call printf
-
-	mov ax, offset buffer
-	call printf
-
 	mov ax, offset input_msg_2
 	call printf
+
+	call outputf
 
 	mov ax, 4c00h
 	int 21H
 
 data segment
 input_msg_1 db "Input the String:", '$'
-input_msg_2 db "Here is the end.", '$'
+input_msg_2 db "Now we get the str:", '$'
 
 ; we assume use this to store the str body
 
@@ -36,7 +32,7 @@ input_msg_2 db "Here is the end.", '$'
 buffer db 20
 ; here we store the len of the gotten str
 db ?
-str_res db "123456789012345678901234567890", '$'
+db "123456789012345678901234567890", '$'
 
 CRLF DB 0AH, 0DH,'$' 
 
@@ -62,38 +58,36 @@ printf proc far
 printf endp
 
 inputf proc far
-	push es
 
-	; get the str
-	LEA DX, buffer
-	mov ah, 0ah
-	int 21H
-
-	; process the str
-	; get the len of tar str
-	mov bx, dx
-	mov ax, [bx + 1]
-	; get the pos of end sym
-	add al, 2
-    mov ah, 0
-    ; store to reg
-    mov di, ax
-
-    ; get the obsolute pos of str end
-    mov ax, offset buffer
-    mov es, ax
-    ; w the end sym
-    mov dx, '$'
-    MOV es:[di], dx
+	LEA DX, BUFFER                        ;接收字符串
+	MOV AH, 0AH
+	INT 21H
+	MOV AL, BUFFER+1                     ;对字符串进行处理
+	ADD AL, 2
+	MOV AH, 0
+	MOV SI, AX
+    MOV BUFFER[SI], '$'
 
     ; 換行
 	LEA DX,offset CRLF             
 	MOV AH, 09H					 
 	INT 21H
 
-	pop es
 	retf
 inputf endp
+
+outputf proc far
+
+	LEA DX, BUFFER+2                     ;输出输入的字符串
+	MOV AH, 09H							 
+	INT 21H
+
+	LEA DX,offset CRLF             
+	MOV AH, 09H					 
+	INT 21H
+
+	retf
+outputf endp
 
 code ends
 
