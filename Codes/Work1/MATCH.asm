@@ -48,6 +48,7 @@ ending:
 
 ; proc will use the ax to get the msg
 printf proc far
+	push dx
 	mov dx, ax 
 	mov ax, 0900h
 	int 21H
@@ -56,6 +57,7 @@ printf proc far
 	MOV AH, 09H					 
 	INT 21H
 
+	pop dx
 	retf
 printf endp
 
@@ -224,17 +226,17 @@ certify_input proc far
 	call printf
 	mov _find, 1h
 
-certify_end:
-	retf
+	certify_end:
+		retf
 
-certify_empty:
-	lea ax, certification_empty
-	jmp certify_end
+	certify_empty:
+		lea ax, certification_empty
+		jmp certify_end
 
-certify_overflow:
-	lea ax, certification_overflow
-	call printf
-	jmp certify_end
+	certify_overflow:
+		lea ax, certification_overflow
+		call printf
+		jmp certify_end
 certify_input endp
 
 end_judge proc far
@@ -264,8 +266,7 @@ end_judge endp
 
 disp_num proc far
 	; this proc attemp to disp a sepecific num
-	mov ax, 0h
-	mov si, ax
+	mov si, 0h
 	mov ax, dx
 	mov ah, 0h
 	num_div:
