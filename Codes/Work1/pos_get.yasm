@@ -1,0 +1,63 @@
+process_data_times proc far
+	; load the data
+	mov al, source_str+1
+	mov ah, 0h
+	mov cx, ax
+	
+	mov si, 2
+	mov dx, 0
+
+	cmping:
+		push cx
+		push si
+		mov al, destin_str+1
+		mov ah, 0h
+		mov cx, ax
+		mov di, 2
+		
+		subcmp:
+			mov ah, source_str[si]
+			mov al, destin_str[di]
+			cmp ah, al
+			jne subcmp_fail
+			inc di
+			inc si
+		loop subcmp
+
+		jmp subcmp_success
+
+		subcmp_next:
+			; 将si复位
+			pop si
+			inc si
+			pop cx
+	
+	loop cmping
+	
+	audition:
+		cmp dx, 0
+		ja audition_success
+	res:
+	retf
+	
+	subcmp_success:
+		inc dx
+		jmp subcmp_next
+
+	subcmp_fail:
+		jmp subcmp_next
+
+	audition_success:
+		push dx
+		lea dx, disp_audition_success
+		mov ah, 09h
+		int 21H
+		
+		pop dx
+		call disp_num
+
+		jmp res
+
+	audition_fail:
+		jmp res
+process_data_times endp
