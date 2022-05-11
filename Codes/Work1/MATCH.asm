@@ -1,4 +1,8 @@
-; 
+; in this function we implement the str match function
+; we have two types of match
+; the 'times' we'd calc the times of a str apears
+; the pos get the pos of the str first occurs
+
 assume cs:code,ds:data,ss:stack
 
 code segment
@@ -20,12 +24,20 @@ work:
 
 	call input_tar
 
+	call certify_input
+
+	mov al, _find
+	cmp al, 1h
+	jne next_time
+
 	lea ax, process_msg_doing
 	call printf
 
-	call process_data_times
+	call process_data_pos
 
 	call end_judge
+
+next_time:
 
 	call input_next
 	je work
@@ -88,6 +100,8 @@ input_next endp
 
 process_data_times proc far
 	; load the data
+	mov _find, 0h
+
 	mov al, source_str+1
 	mov ah, 0h
 	mov cx, ax
@@ -144,6 +158,8 @@ process_data_times proc far
 process_data_times endp
 
 process_data_pos proc far
+	mov _find, 0h
+
 	mov al, source_str+1
 	mov ah, 0h
 	mov cx, ax
@@ -160,6 +176,7 @@ process_data_pos proc far
 		mov di, 2
 
 		pos_get_sub:
+
 			mov ah, source_str[si]
 			mov al, destin_str[di]
 			cmp ah, al
@@ -170,33 +187,61 @@ process_data_pos proc far
 		
 		jmp pos_get_success
 
-		pos_get_conti:
+		pos_get_next:
 			pop si
 			inc si
 			pop cx
 	loop pos_get_main
 
-	mov ax, 1h
-
-	pos_get_end:
+	pos_get_res:
 		retf
 
 	pos_get_success:
+		; after this func we should clean the stack
+		pop ax
+		pop ax
+
 		mov dx, si
-		mov ax, 0h
-		jmp pos_get_end
+		sub dx, 2
+		mov _find, 1h
+		jmp pos_get_res
 
 	pos_get_fail:
-		jmp pos_get_conti
-
+		jmp pos_get_next
 process_data_pos endp
+
+certify_input proc far
+	mov _find, 0h
+
+	mov dl, destin_str+1
+	cmp dl, 0
+	je certify_empty
+	mov al, source_str+1
+	cmp dl, al
+	jnb certify_overflow
+
+	lea ax, certification_valid
+	call printf
+	mov _find, 1h
+
+certify_end:
+	retf
+
+certify_empty:
+	lea ax, certification_empty
+	jmp certify_end
+
+certify_overflow:
+	lea ax, certification_overflow
+	call printf
+	jmp certify_end
+certify_input endp
 
 end_judge proc far
 	push dx
 	mov al, _find
-	cmp al, 1h
-	jne judge_fail
-	je judge_success
+	cmp al, 0h
+	ja judge_success
 
 	judge_fail:
 		pop dx
@@ -217,13 +262,30 @@ end_judge proc far
 		retf
 end_judge endp
 
-
 disp_num proc far
 	; this proc attemp to disp a sepecific num
-	add dl, '0'
-	mov ah, 02h
-	int 21H
+	mov ax, 0h
+	mov si, ax
+	mov ax, dx
+	mov ah, 0h
+	num_div:
+		mov ah, 0h
 
+		div ten
+		push ax
+		inc si
+
+		cmp al, 0h
+		jne num_div
+
+	mov cx, si
+	_disp:
+		pop dx
+		mov dl, dh
+		add dl, '0'
+		mov ah, 02h
+		int 21H
+		loop _disp
 	LEA DX, CRLF
 	MOV AH, 09H
 	INT 21H
@@ -243,9 +305,15 @@ data segment
 
 	process_msg_doing db "Process the info...", '$'
 
-	disp_audition_success db "audition finish, calc result: ", '$'
+	disp_audition_success db "Audition finish, calc result: ", '$'
 
-	disp_audition_fail db "audition finish, no match.", '$'
+	disp_audition_fail db "Audition finish, no match.", '$'
+
+	certification_empty db "Get empty input, please check.", '$'
+
+	certification_overflow db "Get destinated string longger than source.", '$'
+
+	certification_valid db "Get valid inputs.", '$'
 
 	source_str db 200
 		db ?
@@ -259,10 +327,10 @@ data segment
 
 	_find db 0
 
+	ten db 10
 data ends
 
 stack segment
-
 	dw 256 dup(0)
 stack ends
 
