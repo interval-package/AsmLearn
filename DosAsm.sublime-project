@@ -9,6 +9,11 @@
 			"follow_symlinks": true
 
 		},
+		{
+			"name": "Dos_Setter",
+			"path": "D:\\ProgramFiles\\DOSBox-0.74-3",
+			"file_inclued_patterns": ["*.bat","*.exe"],
+		}
 	],
 	"build_systems": [
         {
