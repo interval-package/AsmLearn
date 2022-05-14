@@ -18,7 +18,7 @@
 	"build_systems": [
         {
             "name": "Open DosBox",
-            "shell_cmd": "\"D:/masm32/bin/ZzaBuild.bat\" ${file_base_name}",
+            "shell_cmd": "\"D:\\ProgramFiles\\DOSBox-0.74-3\\DOSBox.exe\" ${file_base_name}",
             "shell": true,
             "file_regex": "^[ ]*File \"(...*?)\", line ([0-9]*)",
             "selector": "source.asm, source.ASM",
