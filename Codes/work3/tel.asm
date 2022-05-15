@@ -328,13 +328,23 @@ next_phase endp
 
 inputf proc far
 	push dx
+	push bx
 	mov dx, ax
 	mov ah, 0AH
 	int 21H
 
+	mov bx, dx
+	mov al, [bx+1]
+    ADD AL,2
+    MOV AH, 0
+    add bx, AX
+    mov al, '$'
+    MOV [bx], al
+
 	lea dx, CRLF
 	mov ah, 09h
 	int 21H
+	pop bx
 	pop dx
 	retf
 inputf endp
