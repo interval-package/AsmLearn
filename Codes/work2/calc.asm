@@ -1,4 +1,9 @@
 assume cs:code,ds:data,ss:stack
+
+stack segment
+	dw 256 dup(0)
+stack ends
+
 code segment
 start:
 	mov ax, data	; init regs
@@ -237,9 +242,5 @@ data segment
 	CRLF DB 0AH, 0DH,'$' 
 
 data ends
-
-stack segment
-	dw 256 dup(0)
-stack ends
 
 end start

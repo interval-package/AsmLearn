@@ -4,6 +4,11 @@
 ;
 
 assume cs:code,ds:data,ss:stack
+
+stack segment
+	dw 1024 dup(0)
+stack ends
+
 code segment
 start:
 	mov ax, data	; init regs
@@ -36,15 +41,15 @@ core_sort_input proc far
 	; this func will sort and save info
 
 	mov al, tel_num
+	sub al, 1
 	mov temp_id_ptr, al
 
 	; get the current num of array
 	mov al, name_num
 	mov ah, 0
-	inc ax
-	mov name_num, al
+	cmp al, ah
+	je sort_empty
 	mov cx, ax
-
 	mov dx, 0
 
 	sort_main:
@@ -53,7 +58,7 @@ core_sort_input proc far
 		jb sort_is_low
 		; jnb sort_isnot_low
 		; sort_isnot_low:
-			jmp sort_loop_end
+		jmp sort_loop_end
 
 		sort_is_low:
 			call swap_name
@@ -63,13 +68,16 @@ core_sort_input proc far
 			inc dx
 	loop sort_main
 
-
 	sort_finish:
 		; end phase update info
 		mov al, name_num
 		inc al
 		mov name_num, al
 		retf
+
+	sort_empty:
+		call swap_name
+		jmp sort_finish
 core_sort_input endp
 
 input_add_item proc far
@@ -79,7 +87,7 @@ input_add_item proc far
 	lea ax, msg_input_name
 	call printf
 
-	lea ax, name_buffer
+	mov ax, offset name_buffer
 	call inputf
 
 	lea ax, msg_input_tel
@@ -168,10 +176,11 @@ swap_name proc far
 	call locate_name_id
 
 	; swap the len
-	mov al, [di]
-	mov ah, name_buffer+1
-	mov [di], ah
-	mov name_buffer+1, al
+	mov ah, [di]
+	mov al, name_buffer+1
+	mov [di], al
+	mov name_buffer+1, ah
+	
 
 	; cache the temp_ptr
 	mov dl, [di+1]
@@ -181,28 +190,30 @@ swap_name proc far
 
 	; swapping the body
 
-	lea si, name_buffer
-	add si, 2
-
-	add di, 2
+	mov ax, 2
+	mov si, ax
 
 	; swap all, including the useless data
-	mov ax, 25
+	mov ax, 20
 	mov cx, ax
 
-	mov bx, ds
+	add di, 2
 	swap_main:
-		mov ax, [bx+si]
-		mov dx, [bx+di]
-		mov [bx+si], dx
-		mov [bx+di], ax
-		inc bx
+		mov dl, name_buffer[si]
+		mov al, [di]
+		mov name_buffer[si], al
+		mov [di], dl
+		inc si
+		inc di
 		loop swap_main
 	pop bx
 	retf
 swap_name endp
 
+; problem
 save_tel proc far
+	push bx
+
 	tel_valid_judge:
 		mov al, tel_buffer+1
 		cmp al, eight
@@ -210,23 +221,28 @@ save_tel proc far
 
 	; here take caution, add action will change the flag
 	mov al, tel_num
-	inc al
-	mov tel_num, al 
 	call locate_tel_id
 	add di, 1
 	mov ax, 2
 	mov si, ax
 	mov cx, 8
+
 	tel_save:
-		mov ah, tel_buffer[si]
-		call disp_num
-		mov [di], ah
+		mov al, tel_buffer[si]
+		mov [di], al
 		inc di
 		inc si
 		loop tel_save
+
+	mov ah, tel_num
+	inc ah
+	mov tel_num, ah
+
 	mov ax, 0
 	cmp ah, al
+
 	tel_end:
+		pop bx
 		retf
 save_tel endp
 
@@ -235,7 +251,6 @@ locate_tel_id proc far
 	; to locate pos, assume num store in al
 	mov ah, 10
 	mul ah
-
 	lea dx, tel_tab
 	add ax, dx
 	mov di, ax
@@ -249,7 +264,6 @@ locate_name_id proc far
 	; to locate pos, assume num store in al
 	mov ah, 25
 	mul ah
-
 	lea dx, name_tab
 	add ax, dx
 	mov di, ax
@@ -279,17 +293,19 @@ disp_total_info proc far
 		mov al, dl
 		call locate_name_id
 		mov ax, di
+		add ax, 2
 		call printf
 
 		mov al, dl
 		call locate_tel_id
 		mov ax, di
+		inc ax
 		call printf
 
 		inc dl
 	loop disp_total_loop
 
-	lea ax, tel_tab
+	lea ax, name_tab
 	call printf
 
 	disp_total_end:
@@ -385,9 +401,9 @@ data segment
 	msg_search_phase db "here is the search_phaseing mode", '$'
 	msg_next_phase db "Input q to quit, s to search_phase info, others to continue.", '$'
 
-	name_buffer db 25
+	name_buffer db 250
 	db ?
-	db 25 DUP(0), '$'
+	db 250 dup('1'), '$'
 
 	tel_buffer db 16
 	db ?
@@ -397,15 +413,18 @@ data segment
 
 	; num of current name tab
 	name_num db 00h
+
 	; pos 1 stores the length of name
 	; pos 2 stores the index of tel in tab
 	; so the len of each item is 25
-	name_tab db 50 dup(?,?,"1234567890123456789000$")
+
+	name_tab db 50 dup(?,0,"1234567890123456789000$")
 
 	; num of current tel tab
 	tel_num db 00h
 	; the length of tel is fixed 8, so the length of each item is 10
 	; pos 1 stores the index of name in tab
+
 	tel_tab db 50 dup(?,"12345678",'$')
 
 	eight db 08h
@@ -414,9 +433,5 @@ data segment
 
 	CRLF DB 0AH, 0DH,'$' 
 data ends
-
-stack segment
-	dw 1024 dup(0)
-stack ends
 
 end start
