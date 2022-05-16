@@ -10,32 +10,32 @@ stack segment
 stack ends
 
 code segment
-start:
-	mov ax, data	; init regs
-	mov ds, ax
-	mov ax, stack
-	mov ss, ax
-	mov sp, 1024
+	start:
+		mov ax, data	; init regs
+		mov ds, ax
+		mov ax, stack
+		mov ss, ax
+		mov sp, 1024
 
-to_next_phase:
-	call next_phase
-	cmp al, 'q'
-	je end_phase
-	cmp al, 's'
-	je search_phase
-	jmp add_phase
+	to_next_phase:
+		call next_phase
+		cmp al, 'q'
+		je end_phase
+		cmp al, 's'
+		je search_phase
+		jmp add_phase
 
-end_phase:
-	mov ax, 4c00h
-	int 21H
+	end_phase:
+		mov ax, 4c00h
+		int 21H
 
-search_phase:
-	call disp_total_info
-	jmp to_next_phase
+	search_phase:
+		call input_search
+		jmp to_next_phase
 
-add_phase:
-	call input_add_item
-	jmp to_next_phase
+	add_phase:
+		call input_add_item
+		jmp to_next_phase
 
 core_sort_input proc far
 	; this func will sort and save info
@@ -55,29 +55,33 @@ core_sort_input proc far
 	sort_main:
 		mov ax, dx
 		call compare_name
-		jb sort_is_low
-		; jnb sort_isnot_low
-		; sort_isnot_low:
+		jna sort_is_low
 		jmp sort_loop_end
-
-		sort_is_low:
-			call swap_name
-			jmp sort_loop_end
 
 		sort_loop_end:
 			inc dx
 	loop sort_main
+
+	; fill the end of table
+	mov ax, dx
+	call swap_name
 
 	sort_finish:
 		; end phase update info
 		mov al, name_num
 		inc al
 		mov name_num, al
+
 		retf
 
 	sort_empty:
 		call swap_name
 		jmp sort_finish
+
+	sort_is_low:
+		mov ax, dx
+		call swap_name
+		jmp sort_loop_end
 core_sort_input endp
 
 input_add_item proc far
@@ -114,14 +118,59 @@ input_add_item proc far
 		retf
 input_add_item endp
 
-;; todo
 core_search proc far
+	mov al, name_num
+	mov ah, 0
+	mov cx, ax
 
+	mov ax, 0
+
+	search_name:
+		call disp_num
+		call compare_name
+		je name_find 
+		inc ax
+	loop search_name
+
+	lea ax, msg_not_find
+	call printf
+
+	search_finish:
 	retf
+
+	name_find:
+		mov dx, ax
+		lea ax, msg_find
+		call printf
+
+		mov al, dl
+		call locate_name_id
+		mov ax, di
+		add ax, 2
+		call printf
+
+		mov al, [di+1]
+		call locate_tel_id
+		mov ax, di
+		add ax, 2
+		call printf
+
+		jmp search_finish
 core_search endp
 
-;; todo
 input_search proc far
+	; call disp_total_info
+
+	lea ax, msg_search_input
+	call printf
+
+	lea ax, msg_input_name
+	call printf
+
+	lea ax, name_buffer
+	call inputf
+
+	call core_search
 
 	retf
 input_search endp
@@ -138,17 +187,15 @@ compare_name proc far
 
 	; transfer the al to di
 	call locate_name_id
-	; mov di, si to the start
-	add di, 2
-	lea si, name_buffer+2
 
-	mov bx, 0
+	lea si, name_buffer
 
 	; init cx
 	mov al, name_buffer+1
 	mov ah, 0
 	mov cx, ax
 
+	mov bx, 2
 	; when comparing using ah buf, al tab
 	comp_single:
 		mov ah, [bx+si]
@@ -157,6 +204,11 @@ compare_name proc far
 		jne comp_end
 		inc bx
 		loop comp_single
+
+	mov ah, name_buffer+1
+	mov al, [di]
+	cmp ah, al
+	jne comp_end
 
 	comp_end:
 		pop ax
@@ -168,7 +220,8 @@ compare_name proc far
 compare_name endp
 
 swap_name proc far
-	push bx
+	push cx
+	push dx
 	; we assume that we get al of the tar num
 	; and this func would swap the num to the buffer
 
@@ -206,11 +259,12 @@ swap_name proc far
 		inc si
 		inc di
 		loop swap_main
-	pop bx
+
+	pop dx
+	pop cx
 	retf
 swap_name endp
 
-; problem
 save_tel proc far
 	push bx
 
@@ -272,7 +326,6 @@ locate_name_id proc far
 	retf
 locate_name_id endp
 
-;; todo
 disp_total_info proc far
 	push ax
 	push cx
@@ -292,6 +345,10 @@ disp_total_info proc far
 	disp_total_loop:
 		mov al, dl
 		call locate_name_id
+		mov ax, [di]
+		call disp_num
+		mov ax, [di+1]
+		call disp_num
 		mov ax, di
 		add ax, 2
 		call printf
@@ -304,9 +361,6 @@ disp_total_info proc far
 
 		inc dl
 	loop disp_total_loop
-
-	lea ax, name_tab
-	call printf
 
 	disp_total_end:
 		pop dx
@@ -351,6 +405,7 @@ inputf endp
 
 printf proc far
 	push dx
+	push ax
 	mov dx, ax 
 	mov ax, 0900h
 	int 21H
@@ -359,6 +414,7 @@ printf proc far
 	MOV AH, 09H
 	INT 21H
 
+	pop ax
 	pop dx
 	retf
 printf endp
@@ -367,6 +423,7 @@ disp_num proc far
 	push cx
 	push si
 	push dx
+	push ax
 
 	; input with al
 	; this proc attempt to disp a specific num
@@ -394,6 +451,7 @@ disp_num proc far
 	MOV AH, 09H
 	INT 21H
 
+	pop ax
 	pop dx
 	pop si
 	pop cx
@@ -404,11 +462,15 @@ code ends
 
 data segment
 	msg_add_item db "Now is to register your tel.", '$'
+	msg_search_input db "Now is search phase.", '$'
+
 	msg_input_name db "Input name:", '$'
 	msg_input_tel db "Input tel number:", '$'
 	msg_input_fail db "Error input!", '$'
 	msg_input_success db "Success input", '$'
-	msg_search_phase db "here is the search_phaseing mode", '$'
+	
+	msg_find db "Find info.", '$'
+	msg_not_find db "Sorry not find.", '$'
 	msg_next_phase db "Input q to quit, s to search_phase info, others to continue.", '$'
 
 	name_buffer db 250
@@ -428,7 +490,7 @@ data segment
 	; pos 2 stores the index of tel in tab
 	; so the len of each item is 25
 
-	name_tab db 50 dup(?,0,"1234567890123456789000$")
+	name_tab db 50 dup(255,0,"1234567890123456789000$")
 
 	; num of current tel tab
 	tel_num db 00h
