@@ -39,9 +39,9 @@ calc_char proc far
 	mov cx, ax
 
 	calcing:
-	mov dl, source_str[si]
-	call core_char_judge
-	inc si
+		mov dl, source_str[si]
+		call core_char_judge
+		inc si
 	loop calcing
 
 	retf

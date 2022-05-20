@@ -6,45 +6,45 @@
 assume cs:code,ds:data,ss:stack
 
 code segment
-start:
-	mov ax, data	; init regs
-	mov ds, ax
-	mov ax, stack
-	mov ss, ax
-	mov sp, 128
+	start:
+		mov ax, data	; init regs
+		mov ds, ax
+		mov ax, stack
+		mov ss, ax
+		mov sp, 128
 
-work:
-	lea ax, input_msg_phrase
-	call printf
+	work:
+		lea ax, input_msg_phrase
+		call printf
 
-	call input_source
-	
-	lea ax, input_msg_tar
-	call printf
+		call input_source
+		
+		lea ax, input_msg_tar
+		call printf
 
-	call input_tar
+		call input_tar
 
-	call certify_input
+		call certify_input
 
-	mov al, _find
-	cmp al, 1h
-	jne next_time
+		mov al, _find
+		cmp al, 1h
+		jne next_time
 
-	lea ax, process_msg_doing
-	call printf
+		lea ax, process_msg_doing
+		call printf
 
-	call process_data_pos
+		call process_data_pos
 
-	call end_judge
+		call end_judge
 
-next_time:
+	next_time:
 
-	call input_next
-	je work
+		call input_next
+		je work
 
-ending:
-	mov ax, 4c00h
-	int 21H
+	ending:
+		mov ax, 4c00h
+		int 21H
 
 ; proc will use the ax to get the msg
 printf proc far
