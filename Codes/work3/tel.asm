@@ -23,6 +23,8 @@ code segment
 		je end_phase
 		cmp al, 's'
 		je search_phase
+		cmp al, 't'
+		je disp_all_phase
 		jmp add_phase
 
 	end_phase:
@@ -31,6 +33,10 @@ code segment
 
 	search_phase:
 		call input_search
+		jmp to_next_phase
+
+	disp_all_phase:
+		call disp_total_info
 		jmp to_next_phase
 
 	add_phase:
@@ -126,7 +132,7 @@ core_search proc far
 	mov ax, 0
 
 	search_name:
-		call disp_num
+		; call disp_num
 		call compare_name
 		je name_find 
 		inc ax
@@ -152,7 +158,7 @@ core_search proc far
 		mov al, [di+1]
 		call locate_tel_id
 		mov ax, di
-		add ax, 2
+		add ax, 1
 		call printf
 
 		jmp search_finish
@@ -471,7 +477,7 @@ data segment
 	
 	msg_find db "Find info.", '$'
 	msg_not_find db "Sorry not find.", '$'
-	msg_next_phase db "Input q to quit, s to search_phase info, others to continue.", '$'
+	msg_next_phase db "Input q to quit, s to search_phase info, t to disp tab in memory.", 0AH, 0DH ,"others to continue.", '$'
 
 	name_buffer db 250
 	db ?
